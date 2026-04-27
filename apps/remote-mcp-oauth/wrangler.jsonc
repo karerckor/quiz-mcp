@@ -1,0 +1,44 @@
+/**
+ * For more details on how to configure Wrangler, refer to:
+ * https://developers.cloudflare.com/workers/wrangler/configuration/
+ */
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "quiz-mcp-oauth",
+	"main": "src/index.ts",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"compatibility_date": "2024-09-23",
+	"kv_namespaces": [
+		{
+			"binding": "OAUTH_KV",
+			"id": "<CHANGE_THIS_VALUE>"
+		},
+		{
+			"binding": "QUIZ_KV",
+			"id": "<CHANGE_THIS_VALUE>"
+		}
+	],
+	"vars": {
+		"QUIZ_TTL_SECONDS": "3600",
+		"QUIZ_RUNNER_URL": "<CHANGE_THIS_VALUE>"
+	},
+	"durable_objects": {
+		"bindings": [
+			{ "name": "MCP_QUIZ_OBJECT", "class_name": "QuizMCP" }
+		]
+	},
+	"migrations": [
+		{ "tag": "v1", "new_sqlite_classes": ["QuizMCP"] }
+	],
+	"assets": {
+		"directory": "../../packages/runner-ui/dist"
+	},
+	"observability": {
+		"enabled": true
+	},
+	"dev": {
+		"port": 8788
+	}
+}
