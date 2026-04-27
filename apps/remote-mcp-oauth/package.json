@@ -1,0 +1,36 @@
+{
+	"name": "@quiz-mcp/remote-mcp-oauth",
+	"version": "0.0.1",
+	"private": true,
+	"scripts": {
+		"build": "tsc -p .",
+		"cf-typegen": "wrangler types --env example",
+		"deploy": "wrangler deploy",
+		"dev": "wrangler dev",
+		"format": "oxfmt --write .",
+		"lint": "oxlint",
+		"lint:fix": "oxlint --fix",
+		"start": "wrangler dev",
+		"type-check": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@cloudflare/workers-oauth-provider": "^0.4.0",
+		"@modelcontextprotocol/sdk": "^1.12.0",
+		"@quiz-mcp/core": "workspace:*",
+		"@quiz-mcp/runner-api": "workspace:*",
+		"@quiz-mcp/runner-ui": "workspace:*",
+		"@quiz-mcp/mcp": "workspace:*",
+		"@workos-inc/node": "^8.10.0",
+		"agents": "^0.9.0",
+		"hono": "^4.12.9",
+		"jose": "^6.2.2",
+		"zod": "^3"
+	},
+	"devDependencies": {
+		"@cloudflare/workers-types": "^4.20260402.1",
+		"oxfmt": "^0.43.0",
+		"oxlint": "^1.58.0",
+		"typescript": "6.0.2",
+		"wrangler": "^4.79.0"
+	}
+}

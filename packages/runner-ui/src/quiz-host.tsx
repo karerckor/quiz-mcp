@@ -58,7 +58,7 @@ export const QuizHost = ({ quizId, quiz }: QuizHostProps) => {
   const [finished, setFinished] = useState(false);
   const [ready, setReady] = useState(false);
 
-  const apiBase = `/${quizId}`;
+  const apiBase = window.location.pathname.replace(/\/+$/, "") || `/${quizId}`;
 
   useEffect(() => {
     const player = playerRef.current;
