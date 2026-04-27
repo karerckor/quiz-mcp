@@ -26,6 +26,8 @@ npx @quiz-mcp/runner \
 
 Once connected, the model gains four tools: `start_quiz`, `get_answers`, `get_quiz_format`, and `stop_runner`.
 
+https://github.com/karerckor/quiz-mcp/raw/main/docs/demo_local.mp4
+
 #### Claude Code
 
 Add to `.mcp.json` in your project root (or `~/.claude.json` for user-wide):
@@ -85,6 +87,8 @@ https://quiz-mcp-oauth.karerckor.workers.dev/mcp
 ```
 
 It exposes the same tools as the local server, plus `get_quizzes` and `cleanup_quiz` for managing per-user state. Each user gets an isolated quiz workspace; login is handled via WorkOS AuthKit on the first tool call.
+
+https://github.com/karerckor/quiz-mcp/raw/main/docs/demo_remote.mp4
 
 #### Claude Code
 
