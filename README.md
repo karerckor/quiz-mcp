@@ -76,6 +76,41 @@ Open the MCP settings panel in Kilo Code (MCP Servers → Edit Global MCP) and a
 
 The same `command`/`args` pair works for any MCP client that follows the standard `mcpServers` shape (Claude Desktop, Cursor, Windsurf, …).
 
+### Use the hosted remote MCP server
+
+If you don't want to install anything locally, there is a hosted, OAuth-protected version of quiz-mcp running on Cloudflare Workers:
+
+```
+https://quiz-mcp-oauth.karerckor.workers.dev/mcp
+```
+
+It exposes the same tools as the local server, plus `get_quizzes` and `cleanup_quiz` for managing per-user state. Each user gets an isolated quiz workspace; login is handled via WorkOS AuthKit on the first tool call.
+
+#### Claude Code
+
+Register the remote server with the `claude` CLI (this stores it in `~/.claude.json`):
+
+```bash
+claude mcp add --transport http quiz-mcp-remote https://quiz-mcp-oauth.karerckor.workers.dev/mcp
+```
+
+Or add it manually to `.mcp.json` (project) / `~/.claude.json` (user-wide):
+
+```json
+{
+  "mcpServers": {
+    "quiz-mcp-remote": {
+      "type": "http",
+      "url": "https://quiz-mcp-oauth.karerckor.workers.dev/mcp"
+    }
+  }
+}
+```
+
+On the first call (e.g. `start_quiz`) Claude Code will open your browser for the OAuth flow; the access token is cached afterwards. Run `/mcp` inside Claude Code to inspect connection state or re-authenticate.
+
+Want to host your own instance? See [`apps/remote-mcp-oauth/README.md`](apps/remote-mcp-oauth/README.md) for the full setup (Cloudflare KV namespaces, WorkOS secrets, `wrangler deploy`).
+
 ### Scaffold and run your own quiz
 
 ```bash
@@ -107,6 +142,7 @@ The runner exits with code `0` on success, `1` on load/validation failure, `2` i
 |---|---|---|
 | `apps/cli` | `@quiz-mcp/cli` | Published binary (`quiz-mcp`). MCP stdio server, lazy runner lifecycle, `create` scaffolding command. |
 | `apps/runner` | `@quiz-mcp/runner` | Standalone CLI that loads a quiz from a file/URL/stdin, serves it in a browser, and writes answers to a file or webhook. |
+| `apps/remote-mcp-oauth` | `@quiz-mcp/remote-mcp-oauth` | Cloudflare Worker hosting an OAuth-protected remote MCP server (WorkOS AuthKit + Durable Objects). Powers `https://quiz-mcp-oauth.karerckor.workers.dev`. |
 | `packages/core` | `@quiz-mcp/core` | Domain foundation: Zod schemas, types, grading engine, answer validation. Single source of truth for the quiz format. |
 | `packages/runner-api` | `@quiz-mcp/runner-api` | Hono HTTP server and SSR shell for the quiz runtime. REST endpoints, theming, i18n. Not published standalone. |
 | `packages/runner-ui` | `@quiz-mcp/runner-ui` | Vite/Hono-JSX client bundle. Hydrates the SSR shell and wires `<quiz-player>` events to the REST API. Assets only, not a runtime import. |
@@ -170,6 +206,7 @@ The schema is also available at the canonical URL embedded in the file:
 
 - [`apps/cli/README.md`](apps/cli/README.md) — MCP tools, lifecycle behaviour, CLI commands
 - [`apps/runner/README.md`](apps/runner/README.md) — standalone runner CLI flags, exit codes, architecture
+- [`apps/remote-mcp-oauth/README.md`](apps/remote-mcp-oauth/README.md) — hosted remote MCP server, OAuth setup, Cloudflare deployment
 - [`packages/core/README.md`](packages/core/README.md) — domain schemas, grading API, validation, adding question types
 - [`packages/runner-api/README.md`](packages/runner-api/README.md) — REST endpoints, SSR server options, `QuizService` interface, theming
 - [`packages/runner-ui/README.md`](packages/runner-ui/README.md) — client bundle internals, Vite manifest, custom deployments
