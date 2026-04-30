@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { getQuizFormatHandler } from "./get-quiz-format.js";
 
 describe("get_quiz_format handler", () => {
-  it("returns the Quiz JSON Schema as structuredContent", async () => {
+  it("returns the Quiz definition JSON Schema as structuredContent (no id; runner assigns it)", async () => {
     const result = await getQuizFormatHandler();
 
     expect(result.isError).toBeUndefined();
@@ -12,9 +12,9 @@ describe("get_quiz_format handler", () => {
     expect(schema).toBeDefined();
     expect(typeof schema).toBe("object");
     expect(schema.type).toBe("object");
-    expect(schema).toHaveProperty("properties.id");
     expect(schema).toHaveProperty("properties.title");
     expect(schema).toHaveProperty("properties.questions");
+    expect(schema).not.toHaveProperty("properties.id");
   });
 
   it("includes a pretty-printed JSON Schema in text content", async () => {
