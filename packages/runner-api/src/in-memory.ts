@@ -1,9 +1,9 @@
-import type { Answer, Quiz } from "@quiz-mcp/core";
+import { newId, type Answer, type Quiz } from "@quiz-mcp/core";
 import { QuizNotFoundError, type QuizService, type QuizState } from "./service.js";
 
 type QuizRuntime = { answers: Map<string, Answer>; finished: boolean };
 
-export function createInMemoryQuizService(quizzes: Quiz[]): QuizService {
+export function createInMemoryQuizService(quizzes: Quiz[] = []): QuizService {
   const quizMap = new Map(quizzes.map((q) => [q.id, q]));
   const runtime = new Map<string, QuizRuntime>(
     quizzes.map((q) => [q.id, { answers: new Map(), finished: false }]),
@@ -15,9 +15,11 @@ export function createInMemoryQuizService(quizzes: Quiz[]): QuizService {
   };
 
   return {
-    async registerQuiz(quiz) {
+    async registerQuiz(definition) {
+      const quiz: Quiz = { ...definition, id: newId() };
       quizMap.set(quiz.id, quiz);
       runtime.set(quiz.id, { answers: new Map(), finished: false });
+      return quiz;
     },
     async quizExists(quizId) { return quizMap.has(quizId); },
     async getQuiz(quizId) {

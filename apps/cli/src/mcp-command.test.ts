@@ -1,12 +1,11 @@
 import { afterEach, describe, expect, it } from "vitest";
-import type { Quiz } from "@quiz-mcp/core";
+import type { QuizDefinition } from "@quiz-mcp/core";
 import { createInMemoryQuizService } from "@quiz-mcp/runner-api/in-memory";
 import { createRunnerServer } from "@quiz-mcp/runner-api/server";
 import { HostedService } from "./hosted-service.js";
 import { RunnerHost } from "./runner-host.js";
 
-const TEST_QUIZ: Quiz = {
-  id: "test-quiz-1",
+const TEST_DEFINITION: QuizDefinition = {
   title: "Integration",
   questions: [],
 };
@@ -23,21 +22,22 @@ describe("mcp-command integration: HostedService + RunnerHost + createRunnerServ
     host = new RunnerHost(() => createRunnerServer({ service: inner }));
     const hosted = new HostedService(inner, host);
 
-    await hosted.registerQuiz(TEST_QUIZ);
+    const quiz = await hosted.registerQuiz(TEST_DEFINITION);
     expect(host.isRunning()).toBe(true);
+    expect(quiz.id).toBeDefined();
 
-    const quizRes = await fetch(`${host.url}/${TEST_QUIZ.id}/quiz.json`);
+    const quizRes = await fetch(`${host.url}/${quiz.id}/quiz.json`);
     expect(quizRes.status).toBe(200);
-    expect(await quizRes.json()).toEqual(TEST_QUIZ);
+    expect(await quizRes.json()).toEqual(quiz);
 
-    const finishRes = await fetch(`${host.url}/${TEST_QUIZ.id}/finish`, {
+    const finishRes = await fetch(`${host.url}/${quiz.id}/finish`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ answers: {} }),
     });
     expect(finishRes.status).toBe(204);
 
-    const state = await hosted.getState(TEST_QUIZ.id);
+    const state = await hosted.getState(quiz.id);
     expect(state.finished).toBe(true);
 
     // Auto-stop is fire-and-forget; give it a tick.

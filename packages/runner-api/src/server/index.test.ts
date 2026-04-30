@@ -11,7 +11,9 @@ const MINI_QUIZ: Quiz = {
 
 function inMemoryService(): QuizService {
   return {
-    async registerQuiz() {},
+    async registerQuiz(definition) {
+      return { ...definition, id: "generated" };
+    },
     async quizExists(id) { return id === MINI_QUIZ.id; },
     async getQuiz(id) {
       if (id !== MINI_QUIZ.id) throw new QuizNotFoundError(id);

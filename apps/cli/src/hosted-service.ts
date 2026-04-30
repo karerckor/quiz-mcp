@@ -1,4 +1,4 @@
-import type { Answer, Quiz } from "@quiz-mcp/core";
+import type { Answer, Quiz, QuizDefinition } from "@quiz-mcp/core";
 import type { QuizService, QuizState } from "@quiz-mcp/runner-api";
 import type { RunnerHost } from "./runner-host.js";
 
@@ -8,10 +8,11 @@ export class HostedService implements QuizService {
     private readonly host: RunnerHost,
   ) {}
 
-  async registerQuiz(quiz: Quiz): Promise<void> {
+  async registerQuiz(definition: QuizDefinition): Promise<Quiz> {
     await this.host.ensureStarted();
-    await this.inner.registerQuiz(quiz);
+    const quiz = await this.inner.registerQuiz(definition);
     this.host.trackActive(quiz.id);
+    return quiz;
   }
 
   async quizExists(quizId: string): Promise<boolean> {
