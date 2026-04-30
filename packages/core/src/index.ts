@@ -82,4 +82,9 @@ export {
   type UploadedFile,
 } from './answers/index.js';
 
-export { QuizSchema, type Quiz } from './quiz.js';
+export {
+  QuizSchema,
+  type Quiz,
+  QuizDefinitionSchema,
+  type QuizDefinition,
+} from './quiz.js';

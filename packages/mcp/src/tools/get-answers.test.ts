@@ -75,7 +75,11 @@ function fakeService(seed: { quiz?: Quiz; state?: QuizState } = {}): QuizService
   if (seed.quiz) quizzes.set(seed.quiz.id, seed.quiz);
   if (seed.quiz && seed.state) states.set(seed.quiz.id, seed.state);
   return {
-    async registerQuiz() {},
+    async registerQuiz(definition) {
+      const quiz: Quiz = { ...definition, id: "generated" };
+      quizzes.set(quiz.id, quiz);
+      return quiz;
+    },
     async quizExists(id) { return quizzes.has(id); },
     async getQuiz(id) {
       const q = quizzes.get(id);

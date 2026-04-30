@@ -1,21 +1,25 @@
 import { describe, expect, it, vi } from "vitest";
-import type { Answer, Quiz } from "@quiz-mcp/core";
+import type { Answer, Quiz, QuizDefinition } from "@quiz-mcp/core";
 import type { QuizService, QuizState } from "@quiz-mcp/runner-api";
 import { makeStartQuizHandler } from "./start-quiz.js";
 
-const QUIZ: Quiz = {
-  id: "q1",
+const QUIZ_DEFINITION: QuizDefinition = {
   title: "T",
   questions: [],
 };
 
-function fakeService() {
+function fakeService(nextId = "generated-id") {
   const quizzes = new Map<string, Quiz>();
   const states = new Map<string, QuizState>();
+  let counter = 0;
   const service: QuizService = {
-    async registerQuiz(q) {
-      quizzes.set(q.id, q);
-      states.delete(q.id);
+    async registerQuiz(definition) {
+      const id = `${nextId}${counter === 0 ? "" : `-${counter}`}`;
+      counter += 1;
+      const quiz: Quiz = { ...definition, id };
+      quizzes.set(id, quiz);
+      states.delete(id);
+      return quiz;
     },
     async quizExists(id) { return quizzes.has(id); },
     async getQuiz(id) {
@@ -31,8 +35,8 @@ function fakeService() {
 }
 
 describe("start_quiz handler", () => {
-  it("registers the quiz and opens the browser when open=true", async () => {
-    const { service, quizzes } = fakeService();
+  it("registers the quiz with a service-assigned id and opens the browser when open=true", async () => {
+    const { service, quizzes } = fakeService("q1");
     const openBrowser = vi.fn().mockResolvedValue(undefined);
 
     const handler = makeStartQuizHandler({
@@ -41,9 +45,9 @@ describe("start_quiz handler", () => {
       openBrowser,
     });
 
-    const result = await handler({ quiz: QUIZ, open: true });
+    const result = await handler({ quiz: QUIZ_DEFINITION, open: true });
 
-    expect(quizzes.get("q1")).toEqual(QUIZ);
+    expect(quizzes.get("q1")).toEqual({ ...QUIZ_DEFINITION, id: "q1" });
     expect(openBrowser).toHaveBeenCalledTimes(1);
     expect(openBrowser).toHaveBeenCalledWith("http://localhost:3000/q1");
     expect(result.structuredContent).toEqual({
@@ -64,7 +68,7 @@ describe("start_quiz handler", () => {
       openBrowser,
     });
 
-    const result = await handler({ quiz: QUIZ, open: false });
+    const result = await handler({ quiz: QUIZ_DEFINITION, open: false });
 
     expect(openBrowser).not.toHaveBeenCalled();
     expect(result.structuredContent).toMatchObject({ opened: false });
@@ -80,7 +84,7 @@ describe("start_quiz handler", () => {
       openBrowser,
     });
 
-    const result = await handler({ quiz: QUIZ, open: true });
+    const result = await handler({ quiz: QUIZ_DEFINITION, open: true });
 
     expect(openBrowser).toHaveBeenCalledTimes(1);
     expect(result.isError).toBeUndefined();
@@ -88,7 +92,7 @@ describe("start_quiz handler", () => {
   });
 
   it("trims trailing slash from serverUrl", async () => {
-    const { service } = fakeService();
+    const { service } = fakeService("q1");
     const openBrowser = vi.fn().mockResolvedValue(undefined);
 
     const handler = makeStartQuizHandler({
@@ -97,7 +101,7 @@ describe("start_quiz handler", () => {
       openBrowser,
     });
 
-    const result = await handler({ quiz: QUIZ, open: true });
+    const result = await handler({ quiz: QUIZ_DEFINITION, open: true });
 
     expect(openBrowser).toHaveBeenCalledWith("http://localhost:3000/q1");
     expect(result.structuredContent).toMatchObject({
@@ -105,25 +109,27 @@ describe("start_quiz handler", () => {
     });
   });
 
-  it("upserts a quiz with an existing id and clears state", async () => {
-    const { service, quizzes, states } = fakeService();
-    states.set("q1", { finished: true, answers: { x: { questionId: "x", _kind: "short_text", text: "old" } } });
-    quizzes.set("q1", { ...QUIZ, title: "Old" });
+  it("uses the id returned by registerQuiz, not anything from the input", async () => {
+    const { service, quizzes } = fakeService("server-side");
+    const openBrowser = vi.fn().mockResolvedValue(undefined);
 
     const handler = makeStartQuizHandler({
       service,
       serverUrl: "http://localhost:3000",
-      openBrowser: vi.fn().mockResolvedValue(undefined),
+      openBrowser,
     });
 
-    await handler({ quiz: { ...QUIZ, title: "New" }, open: false });
+    const r1 = await handler({ quiz: { ...QUIZ_DEFINITION, title: "First" }, open: false });
+    const r2 = await handler({ quiz: { ...QUIZ_DEFINITION, title: "Second" }, open: false });
 
-    expect(quizzes.get("q1")?.title).toBe("New");
-    expect(states.has("q1")).toBe(false);
+    expect(r1.structuredContent).toMatchObject({ quizId: "server-side" });
+    expect(r2.structuredContent).toMatchObject({ quizId: "server-side-1" });
+    expect(quizzes.get("server-side")?.title).toBe("First");
+    expect(quizzes.get("server-side-1")?.title).toBe("Second");
   });
 
   it("resolves serverUrl from a function on each invocation", async () => {
-    const { service } = fakeService();
+    const { service } = fakeService("q1");
     const openBrowser = vi.fn().mockResolvedValue(undefined);
     const resolver = vi.fn().mockReturnValue("http://resolved.example");
 
@@ -133,10 +139,13 @@ describe("start_quiz handler", () => {
       openBrowser,
     });
 
-    await handler({ quiz: QUIZ, open: true });
-    await handler({ quiz: QUIZ, open: true });
+    await handler({ quiz: QUIZ_DEFINITION, open: true });
+    await handler({ quiz: QUIZ_DEFINITION, open: true });
 
     expect(resolver).toHaveBeenCalledTimes(2);
-    expect(openBrowser).toHaveBeenLastCalledWith("http://resolved.example/q1");
+    // Both calls resolve the same configured URL; the id varies because the
+    // service assigns a fresh one each call.
+    expect(openBrowser).toHaveBeenNthCalledWith(1, "http://resolved.example/q1");
+    expect(openBrowser).toHaveBeenNthCalledWith(2, "http://resolved.example/q1-1");
   });
 });

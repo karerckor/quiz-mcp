@@ -1,4 +1,4 @@
-import type { Answer, Quiz } from "@quiz-mcp/core";
+import { newId, type Answer, type Quiz, type QuizDefinition } from "@quiz-mcp/core";
 import {
 	QuizNotFoundError,
 	type QuizService as QuizServiceContract,
@@ -6,15 +6,6 @@ import {
 } from "@quiz-mcp/runner-api";
 
 const DEFAULT_TTL_SECONDS = 60 * 60;
-
-export class QuizAlreadyActiveError extends Error {
-	readonly quizId: string;
-	constructor(quizId: string) {
-		super(`Quiz ${quizId} is already active. Finish it or call cleanup_quiz first.`);
-		this.name = "QuizAlreadyActiveError";
-		this.quizId = quizId;
-	}
-}
 
 type StoredRecord = {
 	quiz: Quiz;
@@ -34,11 +25,8 @@ export class QuizService implements QuizServiceContract {
 		this.ttlSeconds = parseTtl(ttlSeconds) ?? DEFAULT_TTL_SECONDS;
 	}
 
-	async registerQuiz(quiz: Quiz): Promise<void> {
-		const existing = await this.kv.get<StoredRecord>(this.key(quiz.id), "json");
-		if (existing && !existing.finished) {
-			throw new QuizAlreadyActiveError(quiz.id);
-		}
+	async registerQuiz(definition: QuizDefinition): Promise<Quiz> {
+		const quiz: Quiz = { ...definition, id: newId() };
 		const expiresAt = nowSeconds() + this.ttlSeconds;
 		const record: StoredRecord = {
 			quiz,
@@ -49,6 +37,7 @@ export class QuizService implements QuizServiceContract {
 		await this.kv.put(this.key(quiz.id), JSON.stringify(record), {
 			expirationTtl: this.ttlSeconds,
 		});
+		return quiz;
 	}
 
 	async quizExists(quizId: string): Promise<boolean> {

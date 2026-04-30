@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { IdSchema, QuizSchema, type Quiz } from "@quiz-mcp/core";
+import {
+  IdSchema,
+  QuizDefinitionSchema,
+  type QuizDefinition,
+} from "@quiz-mcp/core";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import type { QuizService } from "@quiz-mcp/runner-api";
@@ -14,7 +18,7 @@ export type StartQuizDeps = {
 };
 
 const inputSchema = z.object({
-  quiz: QuizSchema,
+  quiz: QuizDefinitionSchema,
   open: z.boolean().default(true),
 });
 
@@ -28,8 +32,9 @@ export const startQuizConfig = {
   title: "Start Quiz",
   description:
     "Registers a quiz in the runner and (optionally) opens it in the user's " +
-    "default browser. Returns the quiz URL and id. The quiz must match the " +
-    "schema returned by get_quiz_format.",
+    "default browser. The runner assigns a fresh id; do not include one in " +
+    "the input. Returns the assigned quizId and the URL to open. The quiz " +
+    "must match the schema returned by get_quiz_format.",
   inputSchema,
   outputSchema,
 } as const;
@@ -40,9 +45,15 @@ const resolveServerUrl = (source: ServerUrlSource): string =>
   typeof source === "function" ? source() : source;
 
 export function makeStartQuizHandler(deps: StartQuizDeps) {
-  return async ({ quiz, open }: { quiz: Quiz; open: boolean }): Promise<CallToolResult> => {
-    await deps.service.registerQuiz(quiz);
-    const url = `${trimSlash(resolveServerUrl(deps.serverUrl))}/${quiz.id}`;
+  return async ({
+    quiz,
+    open,
+  }: {
+    quiz: QuizDefinition;
+    open: boolean;
+  }): Promise<CallToolResult> => {
+    const registered = await deps.service.registerQuiz(quiz);
+    const url = `${trimSlash(resolveServerUrl(deps.serverUrl))}/${registered.id}`;
     let opened = false;
     if (open) {
       try {
@@ -56,10 +67,10 @@ export function makeStartQuizHandler(deps: StartQuizDeps) {
       content: [
         {
           type: "text" as const,
-          text: `Quiz ${quiz.id} started. URL: ${url} (opened=${opened})`,
+          text: `Quiz ${registered.id} started. URL: ${url} (opened=${opened})`,
         },
       ],
-      structuredContent: { quizId: quiz.id, url, opened },
+      structuredContent: { quizId: registered.id, url, opened },
     };
   };
 }
