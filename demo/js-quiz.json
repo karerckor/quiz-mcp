@@ -114,6 +114,29 @@
         { "id": "q7e", "label": "[] (empty array)" },
         { "id": "q7f", "label": "undefined" }
       ]
+    },
+    {
+      "_kind": "single_choice",
+      "id": "q8",
+      "title": "Hoisting and closures",
+      "text": "What does this snippet log to the console?",
+      "score": 1,
+      "attachments": [
+        [
+          {
+            "id": "q8code",
+            "type": "code",
+            "language": "javascript",
+            "code": "const fns = [];\nfor (var i = 0; i < 3; i++) {\n  fns.push(() => console.log(i));\n}\nfns.forEach((fn) => fn());"
+          }
+        ]
+      ],
+      "options": [
+        { "id": "q8a", "label": "0 1 2" },
+        { "id": "q8b", "label": "3 3 3" },
+        { "id": "q8c", "label": "undefined undefined undefined" },
+        { "id": "q8d", "label": "ReferenceError" }
+      ]
     }
   ]
 }
