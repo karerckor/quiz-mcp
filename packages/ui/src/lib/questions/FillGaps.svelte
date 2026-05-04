@@ -23,31 +23,25 @@
   }
 </script>
 
-<div class="flex flex-wrap items-center gap-x-1 gap-y-2 text-base leading-relaxed">
-    {#each question.parts as part, i (i)}
-      {#if part._kind === 'text'}
-        <span class="text-base-content whitespace-pre-wrap">{part.content}</span>
-      {:else if part._kind === 'text_gap'}
-        <input
-          type="text"
-          class="input input-bordered input-sm inline-block w-40"
-          placeholder={part.placeholder ?? t('question.fillgaps.gap_placeholder')}
-          value={fills[part.gapId] ?? ''}
-          {disabled}
-          oninput={(e) => setGap(part.gapId, (e.currentTarget as HTMLInputElement).value)}
-        />
-      {:else}
-        <select
-          class="select select-bordered select-sm inline-block w-auto"
-          value={fills[part.gapId] ?? ''}
-          {disabled}
-          onchange={(e) => setGap(part.gapId, (e.currentTarget as HTMLSelectElement).value)}
-        >
-          <option value="" disabled>—</option>
-          {#each part.options as option (option.id)}
-            <option value={option.id}>{option.label}</option>
-          {/each}
-        </select>
-      {/if}
-    {/each}
+<div class="text-base-content text-base leading-loose">
+  {#each question.parts as part, i (i)}
+    {#if part._kind === 'text'}<span class="whitespace-pre-wrap">{part.content}</span>{:else if part._kind === 'text_gap'}<input
+        type="text"
+        class="input input-bordered input-sm inline-block w-40 align-middle"
+        placeholder={part.placeholder ?? t('question.fillgaps.gap_placeholder')}
+        value={fills[part.gapId] ?? ''}
+        {disabled}
+        oninput={(e) => setGap(part.gapId, (e.currentTarget as HTMLInputElement).value)}
+      />{:else}<select
+        class="select select-bordered select-sm inline-block w-auto align-middle"
+        value={fills[part.gapId] ?? ''}
+        {disabled}
+        onchange={(e) => setGap(part.gapId, (e.currentTarget as HTMLSelectElement).value)}
+      >
+        <option value="" disabled>—</option>
+        {#each part.options as option (option.id)}
+          <option value={option.id}>{option.label}</option>
+        {/each}
+      </select>{/if}
+  {/each}
 </div>

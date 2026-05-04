@@ -30,6 +30,7 @@
   "dependencies": {
     "@quiz-mcp/core": "workspace:*",
     "daisyui": "^5",
+    "highlight.js": "^11",
     "tailwindcss": "^4"
   },
   "devDependencies": {
